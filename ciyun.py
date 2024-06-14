@@ -9,6 +9,8 @@ import streamlit as st
 from streamlit_echarts import st_echarts
 from streamlit.logger import get_logger
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud  
+from matplotlib import rcParams 
 
 # 读取文件内容
 stop = []
@@ -27,14 +29,13 @@ with open(file_stop,'r',encoding='utf-8-sig') as f:
 for i in range(0,len(stop)):
     for word in stop[i].split():
         standard_stop.append(word)
-print(standard_stop)
 
 f = open('弹幕.txt',encoding='utf-8')
 txt = f.read()
 # print(txt)
-print(jieba.lcut(txt))# 利用jieba模块进行分词，此处输出是一个列表
+# print(jieba.lcut(txt))# 利用jieba模块进行分词，此处输出是一个列表
 string0 = jieba.lcut(txt)
-print(type(string0))#string是一个列表类型
+# print(type(string0))#string是一个列表类型
 # string1 = ' '.join(jieba.lcut(txt))# 利用join方法合并成字符串
 
 print("--------------------------------------------------------------------")
@@ -47,20 +48,65 @@ for line  in string0:
          if i not in  standard_stop:
             after_text.append(i)
 print(after_text)
-string2 = ' '.join(after_text)#把列表转换成字符串
-print(type(string2))
+# string2 = ' '.join(after_text)#把列表转换成字符串
+# print(type(string2))
 
-def bizhan_punctuation(text):#除去标点符号
+'''def bizhan_punctuation(text):#除去标点符号
     punctuation = string.punctuation
     for char in text:
         if char in punctuation:
             text = text.replace(char, ' ')
     return text
 string3 = bizhan_punctuation(string2)
-print(string3)
+print(string3)'''
 
+# 确保matplotlib使用支持中文的字体  
+rcParams['font.sans-serif'] = ['SimHei']  # 替换为你的字体文件，如果SimHei不可用  
+rcParams['axes.unicode_minus'] = False  # 正确显示负号  
+  
+# 假设你已经有了 after_text 和 top_words  
+word_counts = Counter(after_text)  
+top_words = word_counts.most_common(10)  
+x, y = zip(*top_words)  
+  
+# 绘制柱状图  
+bars = plt.bar(x, y, color='blue')  
+  
+# 为每一根柱子添加标签  
+def autolabel(bars):  
+    for bar in bars:  
+        height = bar.get_height()  
+        plt.text(bar.get_x() + bar.get_width()/2., height,  
+                 '%.2f' % height,  
+                 ha='center', va='bottom', fontsize=12)  
+  
+autolabel(bars)  
+  
+# 设置标题、坐标轴标签和x轴刻度倾斜  
+plt.title('词频柱状图', fontsize=14)  
+plt.xlabel('词汇', fontsize=12)  
+plt.ylabel('词频', fontsize=12)  
+plt.xticks(rotation=45)  
+  
+# 显示图形  
+plt.show()
+  
+# 生成词云  
+wordcloud = WordCloud(font_path='simhei.ttf',  # 需要指定支持中文的字体路径  
+                      background_color='white',  
+                      width=800,  
+                      height=600,  
+                      margin=2,  
+                      min_font_size=10).generate_from_frequencies(word_counts)  
+  
+# 使用matplotlib显示词云  
+plt.figure(figsize=(8, 6), facecolor=None)  
+plt.imshow(wordcloud)  
+plt.axis("off")  
+plt.tight_layout(pad=0)  
+plt.show()  
 
-print("----------------------词频统计----------------------------")
+'''print("----------------------词频统计----------------------------")
 def count_word_frequency(word_list):
     # 使用Counter对词频进行统计
     word_freq = Counter(word_list)
@@ -70,23 +116,13 @@ def count_word_frequency(word_list):
         word_freq.items(), key=lambda x: x[1], reverse=True)
 
     return sorted_word_freq
-
-
+fter_text = count_word_frequency(after_text)
+print(fter_text)
 # 统计词频
-words = string3
-word_freq = count_word_frequency(words)
-print("词频统计结果:", word_freq)
-
-plt.figure(figsize=(10, 7))  # 设置图形大小  
-plt.bar([word for word, count in word_freq], [count for word, count in word_freq], color='skyblue')  
-plt.xlabel('Words')  
-plt.ylabel('Frequency')  
-plt.title('Word Frequency')  
-plt.xticks(rotation=45)  # 如果单词太长，可以旋转x轴标签以便阅读  
-plt.tight_layout()  # 确保标签不会与图形重叠  
-plt.show()
 
 print("----------------------词频统计----------------------------")
+
+
 
 for content in after_text:
     with open('弹幕已清洗.txt',mode='a',encoding='utf-8')as f:
@@ -105,24 +141,4 @@ wc = wordcloud.WordCloud(#此处是WordCloud，要是wordcloud（小写）不会
     
 )
 wc.generate(string2)
-wc.to_file('弹幕词云.png') 
-'''
-wordcloud_options = {
-    "tooltip": {
-        "trigger": 'item',
-        "formatter": '{b} : {c}'
-    },
-    "xAxis": [{
-        "type": "category", 
-        "data": [word for word, count in string2],
-        "axisLabel": {
-        "interval": 0, 
-        "rotate": 30
-        }
-    }],
-    "yAxis": [{"type": "value"}],
-    "series": [{
-        "type": "bar",
-        "data": [count for word, count in string2]
-    }]
-        }'''
+wc.to_file('弹幕词云.png') '''
